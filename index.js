@@ -43,4 +43,5 @@ client.login(token).catch((error) => {
       "   - Deshabilita los intents privilegiados o habilítalos en el portal de Discord si los necesitas."
     );
   }
+  process.exit(1);
 });
