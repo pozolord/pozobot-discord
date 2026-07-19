@@ -2,10 +2,13 @@ require("dotenv").config();
 
 const { Client, GatewayIntentBits, Events } = require("discord.js");
 
-const token = process.env.TOKEN;
+const token = process.env.TOKEN || process.env.DISCORD_TOKEN;
+
+console.log("🔧 Iniciando PozoBot...");
+console.log(`🔑 TOKEN definido: ${Boolean(token)}`);
 
 if (!token) {
-  console.error("❌ TOKEN no definido en .env. Agrega TOKEN=tu_token_aqui");
+  console.error("❌ TOKEN no definido en el entorno. Agrega TOKEN o DISCORD_TOKEN como variable de entorno.");
   process.exit(1);
 }
 
