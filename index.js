@@ -2,9 +2,17 @@ require("dotenv").config();
 
 const { Client, GatewayIntentBits, Events } = require("discord.js");
 
-const token = process.env.TOKEN || process.env.DISCORD_TOKEN;
+const tokenNames = ["TOKEN", "DISCORD_TOKEN", "BOT_TOKEN", "DISCORDTOKEN"];
+const token = tokenNames.find((name) => {
+  const value = process.env[name];
+  return typeof value === "string" && value.trim().length > 0;
+});
 
 console.log("🔧 Iniciando PozoBot...");
+console.log(
+  "🔑 Variables de token encontradas:",
+  Object.keys(process.env).filter((key) => /TOKEN|DISCORD|BOT/i.test(key))
+);
 console.log(`🔑 TOKEN definido: ${Boolean(token)}`);
 
 if (!token) {
