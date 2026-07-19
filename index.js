@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 
 const { Client, GatewayIntentBits, Events } = require("discord.js");
 
@@ -21,27 +21,84 @@ if (!token) {
 }
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
   presence: {
     status: "online",
     activities: [{ name: "con PozoBot", type: 0 }],
   },
 });
 
+const commands = {
+  ping: async (message) => {
+    await message.reply("Pong! 🏓");
+  },
+  help: async (message) => {
+    await message.reply("Comandos disponibles: `!ping`, `!help`");
+  },
+};
+
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`✅ ${readyClient.user.tag} está conectado y listo.`);
 });
 
-// Si quieres usar comandos de texto como !ping, habilita el intent de Message Content
-// en el Discord Developer Portal y agrega GatewayIntentBits.MessageContent aquí.
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+  if (!message.guild) return;
 
-client.login(token).catch((error) => {
-  console.error("❌ No se pudo conectar el bot:");
-  console.error(error);
-  if (error.message.includes("disallowed intents")) {
-    console.error(
-      "   - Deshabilita los intents privilegiados o habilítalos en el portal de Discord si los necesitas."
-    );
+  const prefix = "!";
+  if (!message.content.startsWith(prefix)) return;
+
+  const [rawCommand, ...args] = message.content.slice(prefix.length).trim().split(/\s+/);
+  const command = rawCommand.toLowerCase();
+
+  if (commands[command]) {
+    try {
+      await commands[command](message, args);
+    } catch (error) {
+      console.error("Error al ejecutar comando:", error);
+      await message.reply("Ocurrió un error al ejecutar el comando.");
+    }
   }
-  process.exit(1);
 });
+
+client.on(Events.Error, (error) => {
+  console.error("⚠️ Error del cliente:", error);
+});
+
+client.on(Events.ShardReconnecting, () => {
+  console.warn("🔄 El bot está intentando reconectarse...");
+});
+
+client.on(Events.ShardDisconnect, (event, shardId) => {
+  console.warn(`🔌 Desconectado (shard ${shardId}). Código: ${event.code}, razón: ${event.reason}`);
+});
+
+async function startBot(retries = 0) {
+  try {
+    await client.login(token);
+  } catch (error) {
+    console.error("❌ No se pudo conectar el bot:");
+    console.error(error);
+
+    if (error.message.includes("disallowed intents")) {
+      console.error(
+        "   - Habilita Message Content Intent en el portal de Discord si quieres usar comandos de texto."
+      );
+    }
+
+    if (retries < 5) {
+      const delaySeconds = 5 * (retries + 1);
+      console.log(`⏳ Reintentando en ${delaySeconds} segundos... (${retries + 1}/5)`);
+      await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
+      return startBot(retries + 1);
+    }
+
+    process.exit(1);
+  }
+}
+
+startBot();
